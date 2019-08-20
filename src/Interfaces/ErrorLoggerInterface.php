@@ -8,11 +8,9 @@
 
 namespace OutputFormatter\Interfaces;
 
-/**
- * Interface TransformerInterface
- * @package App\Modules\Output
- */
-interface TransformerInterface
-{
+use Exception;
 
+interface ErrorLoggerInterface
+{
+    public function log(Exception $exception);
 }

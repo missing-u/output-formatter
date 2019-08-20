@@ -6,22 +6,26 @@
  * Time: 1:29 PM
  */
 
-namespace OutputFormatter;
+namespace OutputFormatter\Transformer;
 
+use OutputFormatter\Interfaces\ErrorLoggerInterface;
+use OutputFormatter\Interfaces\TransformerInterface;
 use Throwable;
-use Monolog\Logger;
+
+//use Monolog\Logger;
 
 abstract class Transformer implements TransformerInterface
 {
+    private $logger;
+
     public abstract function transform($data, ...$params) : array;
 
     /**
      * @param $collection
      * @param mixed ...$extra_params
      * @return array
-     * @throws Throwable
      */
-    function transFormCollection($collection, ...$extra_params)
+    function transformCollection($collection, ...$extra_params)
     {
         $res = [];
 
@@ -33,10 +37,28 @@ abstract class Transformer implements TransformerInterface
             try {
                 $res[] = $this->transform($v, ...$extra_params);
             } catch (Throwable $exception) {
-                Logger::info("格式转换发生了错误" . $exception->getMessage());
+                if (($logger = $this->getLogger()) !== null) {
+                    $logger->log($exception);
+                }
             }
         }
 
         return $res;
+    }
+
+    /**
+     * @return null|ErrorLoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * @param ErrorLoggerInterface $logger
+     */
+    public function setLogger(ErrorLoggerInterface $logger) : void
+    {
+        $this->logger = $logger;
     }
 }

@@ -8,11 +8,7 @@
 
 namespace OutputFormatter\Interfaces;
 
-/**
- * Interface TransformerInterface
- * @package App\Modules\Output
- */
-interface TransformerInterface
+interface RenderInterface
 {
-
+    public function response($data);
 }
