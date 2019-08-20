@@ -1,44 +1,51 @@
 <?php
 
-namespace OutputFormatter;
+namespace OutputFormatter\Output;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
+use OutputFormatter\FakeLogic;
+use OutputFormatter\Interfaces\TransformerInterface;
+use OutputFormatter\Transformer\Transformer;
 
-trait CollectionOutFormatTrait
+trait CollectionOutTrait
 {
     /**
      * @param Paginator $worksPaginator
-     * @param TransformerInterface|null|Transformer $transformer
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
-     * @throws Throwable
+     * @param null|TransformerInterface $transformer
+     * @param mixed ...$params
+     * @return mixed
      */
     public function respond_fake_pagination(
         Paginator $worksPaginator,
         ?TransformerInterface $transformer = null,
         ...$params
     ) {
+        $items = $worksPaginator->items();
+
+        $num = count($items);
+
         if ($transformer !== null) {
             $items = $transformer->transFormCollection(
-                $worksPaginator->items(),
-                ...$params
+                $items, ...$params
             );
-        } else {
-            $items = $worksPaginator->items();
         }
 
-        return $this->respondDefaultSuccess(
+        $fake_num = FakeLogic::getFakeTotal($num);
+
+        return $this->respond_success(
             [
-                "list" => $items,
+                "list"  => $items,
+                "total" => $fake_num,
             ]
         );
     }
 
     /**
      * @param Paginator $worksPaginator
-     * @param TransformerInterface|null|Transformer $transformer
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
-     * @throws Throwable
+     * @param null|TransformerInterface $transformer
+     * @param mixed ...$params
+     * @return mixed
      */
     public function respond_simple_pagination(
         Paginator $worksPaginator,
@@ -54,7 +61,7 @@ trait CollectionOutFormatTrait
             $items = $worksPaginator->items();
         }
 
-        return $this->respondDefaultSuccess(
+        return $this->respond_success(
             [
                 "list" => $items,
             ]
@@ -62,17 +69,20 @@ trait CollectionOutFormatTrait
     }
 
     /**
-     * @param $worksPaginator
-     * @param null|Transformer $transformer
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
-     * @throws Throwable
+     * @param LengthAwarePaginator $worksPaginator
+     * @param null $transformer
+     * @param mixed ...$params
+     * @return mixed
      */
     public function respond_pagination(
         LengthAwarePaginator $worksPaginator,
         $transformer = null,
         ...$params
     ) {
-        if ($transformer) {
+        if ($transformer !== null) {
+            /**
+             * @var $transformer Transformer
+             */
             $items = $transformer->transFormCollection(
                 $worksPaginator->items(),
                 ...$params
@@ -81,7 +91,7 @@ trait CollectionOutFormatTrait
             $items = $worksPaginator->items();
         }
 
-        return $this->respondDefaultSuccess(
+        return $this->respond_success(
             [
                 "list"  => $items,
                 "total" => $worksPaginator->total(),
@@ -94,18 +104,23 @@ trait CollectionOutFormatTrait
      * @param $items
      * @param null $transformer
      * @param mixed ...$params
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
+     * @return mixed
      */
     public function respond_collection(
         $items,
         $transformer = null,
         ...$params
     ) {
-        $items = $transformer->transFormCollection(
-            $items, ...$params
-        );
+        if ($transformer !== null) {
+            /**
+             * @var $transformer Transformer
+             */
+            $items = $transformer->transFormCollection(
+                $items, ...$params
+            );
+        }
 
-        return $this->respondDefaultSuccess(
+        return $this->respond_success(
             $items
         );
     }
